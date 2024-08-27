@@ -17,24 +17,6 @@ function initializeScene() {
   return { scene, camera, renderer };
 }
 
-// Create a torus shape
-function createTorus(scene) {
-  const geometry = new THREE.TorusGeometry(10, 3, 16, 100);
-  const material = new THREE.MeshStandardMaterial({ color: 0xFF6347 });
-  const torus = new THREE.Mesh(geometry, material);
-  scene.add(torus);
-  return torus;
-}
-
-// Add lighting to the scene
-function addLighting(scene) {
-  const pointLight = new THREE.PointLight(0xffffff);
-  pointLight.intensity = 100;
-  const ambientLight = new THREE.AmbientLight(0xffffff);
-  ambientLight.intensity = 0.4;
-  scene.add(pointLight, ambientLight);
-}
-
 // Positions each star, calculates its size based on distance, and passes color info to fragment shader
 const starVertexShader = `
   attribute float size;
@@ -240,7 +222,7 @@ function createProjectObjects(scene, camera) {
     const screenTexture = new THREE.TextureLoader().load(project.image);
     const screenMaterial = new THREE.MeshBasicMaterial({ map: screenTexture });
     const screen = new THREE.Mesh(screenGeometry, screenMaterial);
-    screen.position.z = 0.11;
+    screen.position.z = 0.11; // Set the local position of the screen so that its slightly further than the frame
 
     // Create the frame
     const frameGeometry = new THREE.BoxGeometry(8.4, 4.9, 0.2);
@@ -304,6 +286,77 @@ function createProjectObjects(scene, camera) {
   return projectObjects;
 }
 
+function createBlackHole(scene) {
+  const group = new THREE.Group();
+
+  // Create the event horizon (black sphere)
+  const horizonGeometry = new THREE.SphereGeometry(5, 32, 32);
+  const horizonMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  const horizon = new THREE.Mesh(horizonGeometry, horizonMaterial);
+  group.add(horizon);
+
+  // Create the accretion disk
+  const diskGeometry = new THREE.RingGeometry(5.5, 12, 64);
+  const diskTexture = new THREE.CanvasTexture(generateDiskTexture());
+  const diskMaterial = new THREE.MeshBasicMaterial({
+    map: diskTexture,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 1,
+  });
+  const disk = new THREE.Mesh(diskGeometry, diskMaterial);
+  disk.rotation.x = Math.PI / 1.5;
+  group.add(disk);
+
+  // Create the gravitational lensing effect
+  const lensGeometry = new THREE.SphereGeometry(5.5, 32, 32);
+  const lensMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      time: { value: 0 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float time;
+      varying vec2 vUv;
+      void main() {
+        vec2 center = vec2(0.5, 0.5);
+        float dist = distance(vUv, center);
+        float alpha = smoothstep(0.5, 0.35, dist);
+        vec3 color = mix(vec3(0.0), vec3(0.1, 0.2, 0.3), dist * 2.0);
+        gl_FragColor = vec4(color, alpha * (0.8 + 0.2 * sin(time)));
+      }
+    `,
+    transparent: true,
+    side: THREE.BackSide
+  });
+  const lens = new THREE.Mesh(lensGeometry, lensMaterial);
+  group.add(lens);
+
+  scene.add(group);
+
+  function generateDiskTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const context = canvas.getContext('2d');
+    const gradient = context.createRadialGradient(256, 256, 0, 256, 256, 256);
+    gradient.addColorStop(0, 'rgba(255, 120, 0, 1)');
+    gradient.addColorStop(0.5, 'rgba(255, 50, 0, 1)');
+    gradient.addColorStop(1, 'rgba(100, 0, 0, 0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 512, 512);
+    return canvas;
+  }
+
+  return group;
+}
+
 // Handle camera movement on scroll
 function animateOnScroll(camera, long, moon, projectObjects, t) {
 
@@ -352,14 +405,12 @@ function animateOnScroll(camera, long, moon, projectObjects, t) {
 // Main animation loop
 // Asking browser to execute animate function before next screen repaint, recursive 
 // function to do this about 60 times a second
-function animate(renderer, scene, camera, torus, moon, starField, updateSkyPosition, projectObjects) {
-  requestAnimationFrame(() => animate(renderer, scene, camera, torus, moon, starField, updateSkyPosition, projectObjects));
+function animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects) {
+  requestAnimationFrame(() => animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects));
 
-  torus.rotation.x += 0.01;
-  torus.rotation.y += 0.005;
-  torus.rotation.z += 0.01;
+  // Black hole's lensing effect:
+  blackHole.children[2].material.uniforms.time.value += 0.01;
 
-  
   moon.rotation.y += 0.001;
   moon.rotation.x += 0.005;
   
@@ -390,8 +441,7 @@ function animate(renderer, scene, camera, torus, moon, starField, updateSkyPosit
 // Main function to set up the scene
 function main() {
   const { scene, camera, renderer } = initializeScene();
-  const torus = createTorus(scene);
-  addLighting(scene);
+  const blackHole = createBlackHole(scene);
   const starField = createStarField(scene);
   const updateSkyPosition = createSpaceBackground(scene, camera);
   const long = createLong(scene);
@@ -412,7 +462,7 @@ function main() {
     starField.position.z = camera.position.z;
   };
 
-  animate(renderer, scene, camera, torus, moon, starField, updateSkyPosition, projectObjects);
+  animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects);
 }
 
 // Start the application
