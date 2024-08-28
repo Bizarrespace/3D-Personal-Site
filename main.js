@@ -27,18 +27,16 @@ function animateOnScroll(camera, long, moon, projectObjects, t) {
   long.rotation.y += 0.01;
   long.rotation.z += 0.01;
 
-  moon.position.x = (t * -0.02) - 70; // Want to make it responsive with scrolling, right now it just moves to the right whenever the user scrolls either left or right
+  moon.position.x = (t * -0.02) - 70; 
   moon.position.y = (t * -0.02) - 70;
 
- //console.log(t);
-
+  
   camera.position.z = t * -0.02;
   camera.position.x = t * -0.002;
   camera.rotation.y = t * -0.00010;
-
   
-
-  // Debug output
+  // Debug console logs
+  // console.log(t);
   // console.log('Camera position:', 
   //   'x:', camera.position.x.toFixed(2), 
   //   'y:', camera.position.y.toFixed(2), 
@@ -49,14 +47,18 @@ function animateOnScroll(camera, long, moon, projectObjects, t) {
   // Update where HTML element (div) appears on the screen to match 3D object
   projectObjects.forEach((po) => {
     // Figure out where 3D object would appear on the 2D screen
-    const screenPosition = po.mesh.position.clone().project(camera);
+    const screenPosition = po.mesh.position
+    .clone()
+    .project(camera);
 
     // Convert screen position to actual pixel locations
-    const translateX = (screenPosition.x * 3 + 0.5) * window.innerWidth;
-    const translateY = (-screenPosition.y * 0.5 + 0.5) * window.innerHeight;
-    console.log("OBJECT")
-    console.log(translateX)
-    console.log(translateY)
+    const translateX = (screenPosition.x * 2 + 0.5) * window.innerWidth;
+    const translateY = (-screenPosition.y + .25) * window.innerHeight;
+
+    // Debug console logs
+    // console.log("OBJECT")
+    // console.log(translateX)
+    // console.log(translateY)
 
 
     // Move the div to the right spot on the screen
@@ -128,6 +130,6 @@ function main() {
 
   animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects);
 }
-
+ 
 // Start the application
 main();

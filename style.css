@@ -74,6 +74,18 @@ blockquote p {
   line-height: 1.1;
 }
 
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent; /* Chrome/Safari/Webkit */
+  display: none;
+}
 
 p, h1, h2, h3, blockquote {
   user-select: none;
