@@ -87,6 +87,7 @@ body::-webkit-scrollbar {
   display: none;
 }
 
+/* Makes it so you can't select html text*/
 p, h1, h2, h3, blockquote {
   user-select: none;
   -webkit-user-select: none;

@@ -89,11 +89,10 @@ function animate(renderer, scene, camera, blackHole, moon, starField, updateSkyP
   // Rotate the project objects
   projectObjects.forEach((po, index) => {
     // Create a smooth oscillation using sine
-    // The multiplier 0.5 determines the speed of oscillation
+    // The multiplier 3 determines the speed of oscillation
     const baseRotation = Math.sin(time * 3 + index);
     
-    // Adjust the rotation range to favor the right side
-    // This will make the rotation range approximately -5 to +15 degrees
+    // Adjust the rotation range to favor the right side to accord for camera being more on the right
     const adjustedRotation = (baseRotation * 0.175) + 0.5;
     
     // Apply the rotation to the y-axis of the object
@@ -114,6 +113,7 @@ function main() {
   const moon = createMoon(scene);
   const projectObjects = createProjectObjects(scene, camera);
 
+  // Temp solution to fix issue with the the object div showing up too early
   setTimeout(() => {
     projectObjects.forEach(po => {
       po.element.style.transition = 'opacity 0.5s ease-in';
@@ -130,6 +130,5 @@ function main() {
 
   animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects);
 }
- 
-// Start the application
+
 main();
