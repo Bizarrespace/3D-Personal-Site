@@ -3,7 +3,7 @@ import './style.css'
 import * as THREE from 'three';
 import { createBlackHole } from './components/blackhole';
 import { createStarField } from './components/starfield';
-import { createLong, createMoon } from './components/normalObject'
+import { createLong, createMoon, createDrone } from './components/normalObject';
 import { createProjectObjects } from './components/projectObjects';
 import { createSpaceBackground } from './components/createSpaceBackground';
 
@@ -71,8 +71,8 @@ function animateOnScroll(camera, long, moon, projectObjects, t) {
 // Main animation loop
 // Asking browser to execute animate function before next screen repaint, recursive 
 // function to do this about 60 times a second
-function animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects) {
-  requestAnimationFrame(() => animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects));
+function animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects, drone) {
+  requestAnimationFrame(() => animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects, drone));
 
   // Black hole's lensing effect:
   blackHole.children[2].material.uniforms.time.value += 0.01;
@@ -100,6 +100,7 @@ function animate(renderer, scene, camera, blackHole, moon, starField, updateSkyP
   });
 
   updateSkyPosition();
+  drone.updateDronePosition();
   renderer.render(scene, camera);
 }
 
@@ -112,6 +113,7 @@ function main() {
   const long = createLong(scene);
   const moon = createMoon(scene);
   const projectObjects = createProjectObjects(scene, camera);
+  const drone = createDrone(scene, camera)
 
   // Temp solution to fix issue with the the object div showing up too early
   setTimeout(() => {
@@ -128,7 +130,7 @@ function main() {
     starField.position.z = camera.position.z;
   };
 
-  animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects);
+  animate(renderer, scene, camera, blackHole, moon, starField, updateSkyPosition, projectObjects, drone);
 }
 
 main();
